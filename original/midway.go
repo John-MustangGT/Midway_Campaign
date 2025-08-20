@@ -210,8 +210,6 @@ func gameLoop() {
 			break
 		}
 		
-		displayTime()
-		
 		fmt.Print("COMMAND: ")
 		if !scanner.Scan() {
 			break
@@ -245,6 +243,7 @@ func gameLoop() {
 			fmt.Println("T-CHANGE TF COURSE  CA-SET CAP")
 			fmt.Println("A-ARM STRIKE        CL-CLEAR DECK")
 			fmt.Println("L-LAUNCH STRIKE      #-WAIT # HOURS")
+			fmt.Print("TRY AGAIN. ")
 			time.Sleep(3 * time.Second)
 		}
 	}
@@ -602,29 +601,90 @@ func clearScreen() {
 }
 
 func displayMap() {
-	// Simplified map display
-	fmt.Println("MIDWAY CAMPAIGN")
-	fmt.Println("================")
+	// Clear previous positions
+	for i := 0; i < 6; i++ {
+		if fz[i] == 1 {
+			// Clear old position
+			x := fx[i]
+			y := fy[i]
+			if x >= 0 && x <= 22 && y >= 0 && y <= 11 {
+				// This would clear the old position in a real terminal
+			}
+		}
+		fz[i] = 0
+		fx[i] = int(fleets[i].x*0.02 + 0.5)
+		fy[i] = int(fleets[i].y*0.01 + 0.5)
+	}
 	
-	// Display fleet positions on a simple grid
+	// Create map grid
+	mapGrid := make([][]string, 12)
+	for i := range mapGrid {
+		mapGrid[i] = make([]string, 23)
+		for j := range mapGrid[i] {
+			mapGrid[i][j] = "."
+		}
+	}
+	
+	// Place fleets on map
+	contactNum := 0
+	for i := 0; i < 6; i++ {
+		x := fx[i]
+		y := fy[i]
+		
+		if x >= 0 && x <= 22 && y >= 0 && y <= 11 {
+			fz[i] = 1
+			var symbol string
+			
+			if i <= 2 {
+				// Japanese fleets - only show if spotted
+				if fleets[i].damage == 0 {
+					continue // Not spotted, don't show
+				}
+				contactNum++
+				symbol = fmt.Sprintf("%d", contactNum)
+			} else {
+				// US fleets and Midway - always show
+				switch i {
+				case 3:
+					symbol = "6" // TF-16
+				case 4:
+					symbol = "7" // TF-17
+				case 5:
+					symbol = "M" // Midway
+				}
+			}
+			
+			mapGrid[11-y][x] = symbol // Invert Y for proper display
+		}
+	}
+	
+	// Display the map
+	fmt.Printf("%d JUNE 1942  %02d:%02d\n", gameDay, int(gameTime)/60, int(gameTime)%60)
+	fmt.Println()
+	
 	for i := 0; i < 12; i++ {
-		line := ". . . . . . . . . . . ."
-		fmt.Println(line)
+		for j := 0; j < 23; j++ {
+			fmt.Print(mapGrid[i][j])
+			if j < 22 {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println()
 	}
 }
 
 func displayStatus() {
-	fmt.Printf("                    TF-16    TF-17\n")
-	fmt.Printf("CAP - ON DECK - -- BELOW --\n")
-	fmt.Printf("F4F SBD TBD F4F SBD TBD\n")
+	fmt.Printf("                    TF-16                 TF-17\n")
+	fmt.Println()
 }
 
 func displayContacts() {
 	contactNum := 0
+	fmt.Println()
 	for i := 0; i < 3; i++ {
 		if fleets[i].damage > 0 {
 			contactNum++
-			fmt.Printf("CONTACT %d ", contactNum)
+			fmt.Printf("CONTACT  %d ", contactNum)
 			if fleets[i].damage >= 2 {
 				switch i {
 				case 0:
@@ -637,33 +697,50 @@ func displayContacts() {
 			} else {
 				fmt.Print("??")
 			}
-			fmt.Printf(" %03.0f°\n", fleets[i].course/pi)
+			fmt.Printf("   %03.0f° %4.0f\n", fleets[i].course/pi, math.Sqrt(fleets[i].x*fleets[i].x+fleets[i].y*fleets[i].y))
 		}
+	}
+	
+	// Clear remaining contact lines
+	for i := contactNum + 1; i <= 3; i++ {
+		fmt.Printf("                             \n")
 	}
 }
 
 func displayCarriers() {
+	fmt.Printf("                   CAP - ON DECK - -- BELOW --\n")
+	fmt.Printf("                   F4F SBD TBD F4F SBD TBD\n")
+	
 	for i := 4; i <= 7; i++ {
-		if carriers[i].damage >= 60 {
-			if carriers[i].damage >= 100 {
-				if i == 7 {
-					fmt.Printf("** AIRBASE DESTROYED **\n")
-				} else {
-					fmt.Printf("** SUNK **\n")
-				}
+		fmt.Printf("%-10s ", getCarrierName(i))
+		
+		if carriers[i].damage >= 100 {
+			if i == 7 {
+				fmt.Printf("** AIRBASE DESTROYED **")
 			} else {
-				fmt.Printf("HEAVY DAMAGE\n")
+				fmt.Printf("** SUNK **")
 			}
+			// Pad with spaces
+			fmt.Printf("%16s", "")
+		} else if carriers[i].damage >= 60 {
+			fmt.Printf("HEAVY DAMAGE  ")
+			// Show remaining aircraft in hangar only
+			fmt.Printf("%3.0f %3.0f %3.0f", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
 		} else {
-			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f\n",
+			// Show CAP, deck, and hangar aircraft
+			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f",
 				carriers[i].cap,
 				carriers[i].deckF4f,
 				carriers[i].deckSbd,
 				carriers[i].deckTbd,
 				carriers[i].f4f,
 				carriers[i].sbd)
+			// TBD column
+			fmt.Printf(" %3.0f", carriers[i].tbd)
 		}
+		fmt.Println()
 	}
+	fmt.Println()
 }
 
 func displayTime() {
