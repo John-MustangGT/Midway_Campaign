@@ -732,37 +732,31 @@ func displayContacts() {
 }
 
 func displayCarriers() {
-	fmt.Printf("                   CAP - ON DECK - -- BELOW --\n")
-	fmt.Printf("                   F4F SBD TBD F4F SBD TBD\n")
+	fmt.Printf("CAP - ON DECK - -- BELOW --\n")
+	fmt.Printf("F4F SBD TBD F4F SBD TBD\n")
 	
 	for i := 4; i <= 7; i++ {
-		fmt.Printf("%-10s ", getCarrierName(i))
-		
 		if carriers[i].damage >= 100 {
 			if i == 7 {
-				fmt.Printf("** AIRBASE DESTROYED **")
+				fmt.Printf("** AIRBASE DESTROYED **\n")
 			} else {
-				fmt.Printf("** SUNK **")
+				fmt.Printf("** SUNK **\n")
 			}
-			// Pad with spaces
-			fmt.Printf("%16s", "")
 		} else if carriers[i].damage >= 60 {
 			fmt.Printf("HEAVY DAMAGE  ")
-			// Show remaining aircraft in hangar only
-			fmt.Printf("%3.0f %3.0f %3.0f", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
+			// Show remaining aircraft in hangar only  
+			fmt.Printf("            %3.0f %3.0f %3.0f\n", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
 		} else {
-			// Show CAP, deck, and hangar aircraft
-			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f",
+			// Show CAP, deck, and hangar aircraft - all 6 columns
+			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f\n",
 				carriers[i].cap,
 				carriers[i].deckF4f,
 				carriers[i].deckSbd,
 				carriers[i].deckTbd,
 				carriers[i].f4f,
 				carriers[i].sbd)
-			// TBD column
-			fmt.Printf(" %3.0f", carriers[i].tbd)
+			// Missing: carriers[i].tbd for hangar TBDs
 		}
-		fmt.Println()
 	}
 	fmt.Println()
 }
