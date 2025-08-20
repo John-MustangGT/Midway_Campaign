@@ -298,56 +298,6 @@ func changeCourse() {
 	displayContacts()
 }
 
-func armStrike() {
-	carrier := selectCarrier()
-	if carrier == -1 {
-		return
-	}
-	
-	if carriers[carrier].deckF4f+carriers[carrier].deckSbd+carriers[carrier].deckTbd > 0 {
-		fmt.Printf("%s STRIKE ALREADY ON DECK.\n", getCarrierName(carrier))
-		time.Sleep(1 * time.Second)
-		return
-	}
-	
-	fmt.Printf("BRING AIRCRAFT TO %s DECK.\n", getCarrierName(carrier))
-	fmt.Print("F4F,SBD,TBD: ")
-	
-	if !scanner.Scan() {
-		return
-	}
-	
-	parts := strings.Fields(scanner.Text())
-	if len(parts) < 3 {
-		return
-	}
-	
-	f4f, _ := strconv.Atoi(parts[0])
-	sbd, _ := strconv.Atoi(parts[1])
-	tbd, _ := strconv.Atoi(parts[2])
-	
-	// Limit to available aircraft
-	if float64(f4f) > carriers[carrier].f4f {
-		f4f = int(carriers[carrier].f4f)
-	}
-	if float64(sbd) > carriers[carrier].sbd {
-		sbd = int(carriers[carrier].sbd)
-	}
-	if float64(tbd) > carriers[carrier].tbd {
-		tbd = int(carriers[carrier].tbd)
-	}
-	
-	// Move aircraft to deck
-	carriers[carrier].deckF4f = float64(f4f)
-	carriers[carrier].f4f -= float64(f4f)
-	carriers[carrier].deckSbd = float64(sbd)
-	carriers[carrier].sbd -= float64(sbd)
-	carriers[carrier].deckTbd = float64(tbd)
-	carriers[carrier].tbd -= float64(tbd)
-	
-	displayCarriers()
-}
-
 func launchStrike() {
 	carrier := selectCarrier()
 	if carrier == -1 {
@@ -468,24 +418,6 @@ func setCap() {
 			carriers[carrier].deckF4f = 0
 		}
 	}
-	
-	displayCarriers()
-}
-
-func clearDeck() {
-	carrier := selectCarrier()
-	if carrier == -1 {
-		return
-	}
-	
-	// Return deck aircraft to hangar
-	carriers[carrier].f4f += carriers[carrier].deckF4f
-	carriers[carrier].sbd += carriers[carrier].deckSbd
-	carriers[carrier].tbd += carriers[carrier].deckTbd
-	
-	carriers[carrier].deckF4f = 0
-	carriers[carrier].deckSbd = 0
-	carriers[carrier].deckTbd = 0
 	
 	displayCarriers()
 }
@@ -720,36 +652,6 @@ func displayContacts() {
 	for i := contactNum + 1; i <= 3; i++ {
 		fmt.Printf("                             \n")
 	}
-}
-
-func displayCarriers() {
-	fmt.Printf("CAP - ON DECK - -- BELOW --\n")
-	fmt.Printf("F4F SBD TBD F4F SBD TBD\n")
-	
-	for i := 4; i <= 7; i++ {
-		if carriers[i].damage >= 100 {
-			if i == 7 {
-				fmt.Printf("** AIRBASE DESTROYED **\n")
-			} else {
-				fmt.Printf("** SUNK **\n")
-			}
-		} else if carriers[i].damage >= 60 {
-			fmt.Printf("HEAVY DAMAGE  ")
-			// Show remaining aircraft in hangar only  
-			fmt.Printf("            %3.0f %3.0f %3.0f\n", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
-		} else {
-			// Show CAP, deck, and hangar aircraft - all 6 columns
-			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f\n",
-				carriers[i].cap,
-				carriers[i].deckF4f,
-				carriers[i].deckSbd,
-				carriers[i].deckTbd,
-				carriers[i].f4f,
-				carriers[i].sbd)
-			// Missing: carriers[i].tbd for hangar TBDs
-		}
-	}
-	fmt.Println()
 }
 
 func displayTime() {
