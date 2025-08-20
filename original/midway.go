@@ -198,6 +198,25 @@ func initializeGame() {
 	}
 }
 
+func getAngle(from, to int) float64 {
+	dx := fleets[to].x - fleets[from].x
+	dy := fleets[to].y - fleets[from].y
+	if dy == 0 {
+		if dx < 0 {
+			return (90 - 180) * pi
+		}
+		return 90 * pi
+	}
+	angle := math.Atan(dx / dy)
+	if dy > 0 {
+		if angle < 0 {
+			angle -= 360 * pi
+		}
+		return angle
+	}
+	return angle + 180*pi
+}
+
 func gameLoop() {
 	for !gameOver {
 		clearScreen()
@@ -697,7 +716,12 @@ func displayContacts() {
 			} else {
 				fmt.Print("??")
 			}
-			fmt.Printf("   %03.0f° %4.0f\n", fleets[i].course/pi, math.Sqrt(fleets[i].x*fleets[i].x+fleets[i].y*fleets[i].y))
+			
+			// Calculate bearing from Midway (fleet 5) to contact
+			bearing := getBearingFromMidway(i)
+			range_nm := getRangeFromMidway(i)
+			
+			fmt.Printf("   %03.0f° %4.0f\n", bearing, range_nm)
 		}
 	}
 	
@@ -755,23 +779,48 @@ func getDistance(fleet1, fleet2 int) float64 {
 	return math.Sqrt(dx*dx + dy*dy)
 }
 
-func getAngle(from, to int) float64 {
-	dx := fleets[to].x - fleets[from].x
-	dy := fleets[to].y - fleets[from].y
+func getBearingFromMidway(targetFleet int) float64 {
+	// Calculate bearing from Midway (fleet 5) to target fleet
+	dx := fleets[targetFleet].x - fleets[5].x
+	dy := fleets[targetFleet].y - fleets[5].y
+	
 	if dy == 0 {
 		if dx < 0 {
-			return (90 - 180) * pi
+			return 270.0
 		}
-		return 90 * pi
+		return 90.0
 	}
+	
+	// Calculate angle in radians
 	angle := math.Atan(dx / dy)
+	
+	// Convert to degrees and adjust for proper bearing
+	bearing := angle / pi
+	
 	if dy > 0 {
-		if angle < 0 {
-			angle -= 360 * pi
-		}
-		return angle
+		// Target is north of Midway
+		bearing = bearing + 0.0
+	} else {
+		// Target is south of Midway  
+		bearing = bearing + 180.0
 	}
-	return angle + 180*pi
+	
+	// Ensure bearing is 0-360
+	for bearing < 0 {
+		bearing += 360.0
+	}
+	for bearing >= 360 {
+		bearing -= 360.0
+	}
+	
+	return bearing
+}
+
+func getRangeFromMidway(targetFleet int) float64 {
+	// Calculate range in nautical miles from Midway to target
+	dx := fleets[targetFleet].x - fleets[5].x
+	dy := fleets[targetFleet].y - fleets[5].y
+	return math.Sqrt(dx*dx + dy*dy)
 }
 
 func getCarrierName(carrier int) string {
