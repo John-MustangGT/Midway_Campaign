@@ -174,21 +174,12 @@ func initializeGame() {
 	carriers[8].cap = carriers[8].f4f
 	carriers[8].f4f = 0
 	
-	// Move some carrier aircraft to deck positions
+	// Initialize deck positions (aircraft start in hangar, not on deck)
 	for i := 4; i <= 7; i++ {
-		for j := 4; j <= 6; j++ {
-			switch j {
-			case 4:
-				carriers[i].deckF4f = carriers[i].f4f
-				carriers[i].f4f = 0
-			case 5:
-				carriers[i].deckSbd = carriers[i].sbd
-				carriers[i].sbd = 0
-			case 6:
-				carriers[i].deckTbd = carriers[i].tbd
-				carriers[i].tbd = 0
-			}
-		}
+		carriers[i].deckF4f = 0
+		carriers[i].deckSbd = 0  
+		carriers[i].deckTbd = 0
+		carriers[i].cap = 0
 	}
 	
 	// Set initial courses for TF-16 and TF-17
