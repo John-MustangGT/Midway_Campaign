@@ -10,7 +10,9 @@ import (
 func processAITurn() {
 	// Convert deck SBDs back from 1000+ encoding (BASIC line 880)
 	for i := 4; i <= 7; i++ {
-		carriers[i].deckSbd = float64(int(carriers[i].deckSbd) % 1000)
+		if carriers[i].deckSbd >= 1000 {
+			carriers[i].deckSbd = float64(int(carriers[i].deckSbd) % 1000)
+		}
 	}
 	
 	// AI fleet movement and attack decisions (BASIC lines 890-1040)

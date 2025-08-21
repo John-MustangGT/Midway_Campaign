@@ -15,7 +15,7 @@ func gameLoop() {
 		displayStatus() 
 		displayContacts()
 		fmt.Printf("            CAP - ON DECK - -- BELOW --\n")
-		fmt.Printf("            F4F SBD TBD F4F SBD TBD\n")
+		fmt.Printf("                F4F SBD TBD F4F SBD TBD\n")
 		displayCarriers()
 		
 		if gameOver {
