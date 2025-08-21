@@ -16,63 +16,55 @@ func processJapaneseStrikes() {
 	a9 := 0.0  // All-out attack flag
 	a8 := 0.0  // Half-attack flag
 	
-	// Check if Japanese carriers have aircraft ready for strikes
+	// BASIC line 1100: Check if any US carriers have aircraft ready (triggers Japanese response)
 	i := 0
-	hasReadyAircraft := false
-	for i = 0; i < 4; i++ {
+	for i = 4; i < 8; i++ {
 		if carriers[i].deckF4f+carriers[i].deckSbd+carriers[i].deckTbd > 0 {
-			hasReadyAircraft = true
 			break
 		}
 	}
 	
-	if !hasReadyAircraft {
-		s9 = 0
+	if i >= 8 {
+		s9 = 0 // No US threat, no Japanese attack
 	} else {
-		// Check for operational carriers (BASIC line 1130)
+		// BASIC line 1130: Find target for Japanese strike
 		i = 4
 		for i = 4; i < 8; i++ {
 			if carriers[i].damage < 60 {
 				fleet := int(carriers[i].fleet)
 				canReach := checkStrikeRange(fleet, 0)
 				if canReach {
+					s9 = carriers[i].fleet
 					break
 				}
 			}
 		}
 		
 		if i >= 8 {
-			// No operational US carriers in range, try attacking fleet directly
+			// BASIC line 1180: Try attacking fleet groups directly
 			i = 4
 			for i = 4; i < 8; i++ {
 				if carriers[i].damage < 100 {
 					fleet := int(carriers[i].fleet)
 					canReach := checkStrikeRange(fleet, 0)
 					if canReach {
+						s9 = carriers[i].fleet
 						break
 					}
 				}
 			}
 			
 			if i >= 8 {
-				// Try Midway
+				// BASIC line 1220: Try Midway as last resort
 				canReach := checkStrikeRange(5, 0)
 				if canReach {
-					i = -7 // Special code for Midway
+					s9 = 5 // Midway
 				}
-			}
-		}
-		
-		if i < 8 || i == -7 {
-			if i == -7 {
-				s9 = 5 // Midway
-			} else {
-				s9 = carriers[i].fleet
 			}
 		}
 	}
 	
-	// Check if any strikes already targeting the same area
+	// BASIC line 1250: Check if any strikes already targeting the same area
 	if s9 >= 3 {
 		for i := 0; i < 10; i++ {
 			if strikes[i].target < 5 && strikes[i].launched != -1 && strikes[i].escort != -1 {
@@ -82,12 +74,12 @@ func processJapaneseStrikes() {
 		}
 	}
 	
-	// Determine attack intensity
-	if fleets[3].damage+fleets[4].damage > 0 { // US task forces spotted
+	// BASIC line 1280: Determine attack intensity based on spotted US forces
+	if fleets[3].damage > 0 || fleets[4].damage > 0 { // US task forces spotted
 		a9 = 1
 	}
 	
-	// Check for Midway attack conditions
+	// BASIC line 1290-1320: Check for Midway attack conditions
 	distance := getDistance(5, 0)
 	if distance <= 235 {
 		flightTime := 60 * distance / 235
@@ -103,7 +95,7 @@ func processJapaneseStrikes() {
 		a8 = 0 // All-out overrides half-attack
 	}
 	
-	// Launch strike if target selected
+	// BASIC line 1340: Launch strike if target selected
 	if s9 >= 3 {
 		strikeSlot := -1
 		for j := 0; j < 10; j++ {
@@ -126,9 +118,9 @@ func processJapaneseStrikes() {
 			strikes[strikeSlot].sbd = 0
 			strikes[strikeSlot].tbd = 0
 			
-			// Collect aircraft from operational carriers
+			// BASIC line 1390: Collect aircraft from operational Japanese carriers
 			for i := 0; i < 4; i++ {
-				if carriers[i].damage < 60 {
+				if carriers[i].damage <= 60 { // Changed from < to <= to match BASIC
 					strikes[strikeSlot].f4f += carriers[i].deckF4f
 					strikes[strikeSlot].sbd += carriers[i].deckSbd
 					strikes[strikeSlot].tbd += carriers[i].deckTbd
@@ -138,14 +130,27 @@ func processJapaneseStrikes() {
 				}
 			}
 			
+			// BASIC line 1410: Cancel if no bombers
 			if strikes[strikeSlot].sbd+strikes[strikeSlot].tbd == 0 {
-				strikes[strikeSlot].launched = -1 // Cancel if no bombers
+				strikes[strikeSlot].launched = -1
 			} else {
+				// BASIC line 1420: Set up strike parameters
 				strikes[strikeSlot].escort = 1
 				strikes[strikeSlot].bomberType = 0
 				if strikes[strikeSlot].sbd/(strikes[strikeSlot].sbd+strikes[strikeSlot].tbd) > rand.Float64() {
 					strikes[strikeSlot].bomberType = -1
 				}
+				
+				fmt.Printf("JAPANESE STRIKE LAUNCHING AGAINST ")
+				if s9 == 5 {
+					fmt.Printf("MIDWAY")
+				} else if s9 == 3 {
+					fmt.Printf("TF-16")
+				} else {
+					fmt.Printf("TF-17") 
+				}
+				fmt.Println("!")
+				time.Sleep(2 * time.Second)
 			}
 		}
 	}
