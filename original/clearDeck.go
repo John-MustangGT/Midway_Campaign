@@ -6,10 +6,8 @@ func clearDeck() {
 		return
 	}
 	
-	// Convert any deck SBDs that are coded as 1000+ back to normal
-	if carriers[carrier].deckSbd >= 1000 {
-		carriers[carrier].deckSbd -= 1000
-	}
+	// Handle the MOD 1000 operation from BASIC line 3120
+	carriers[carrier].deckSbd = float64(int(carriers[carrier].deckSbd) % 1000)
 	
 	// Return deck aircraft to hangar
 	carriers[carrier].f4f += carriers[carrier].deckF4f

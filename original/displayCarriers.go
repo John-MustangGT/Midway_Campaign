@@ -4,30 +4,34 @@ import (
    "fmt"
 )
 
-// Claude.ai chanegs v1
 func displayCarriers() {
-	fmt.Printf("CAP - ON DECK - -- BELOW --\n")
-	fmt.Printf("    F4F SBD TBD F4F SBD TBD\n")
-	
 	for i := 4; i <= 7; i++ {
-		if carriers[i].damage >= 100 {
-			if i == 7 {
-				fmt.Printf("** AIRBASE DESTROYED **               \n")
+		// Print carrier name first
+		fmt.Printf("%-11s", getCarrierName(i))
+		
+		if carriers[i].damage >= 60 {
+			if carriers[i].damage >= 100 {
+				if i == 7 {
+					fmt.Printf("** AIRBASE DESTROYED **   \n")
+				} else {
+					fmt.Printf("** SUNK **                \n")
+				}
 			} else {
-				fmt.Printf("** SUNK **                            \n")
+				fmt.Printf("HEAVY DAMAGE      ")
+				// Show hangar aircraft only when heavily damaged
+				fmt.Printf("    %3.0f %3.0f %3.0f\n", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
 			}
-		} else if carriers[i].damage >= 60 {
-			fmt.Printf("HEAVY DAMAGE      ")
-			fmt.Printf("    %3.0f %3.0f %3.0f\n", carriers[i].f4f, carriers[i].sbd, carriers[i].tbd)
 		} else {
-			displaySbd := getDisplaySBD(carriers[i].deckSbd)
-			fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f\n",
-				carriers[i].cap,
-				carriers[i].deckF4f,
-				displaySbd,
-				carriers[i].deckTbd,
-				carriers[i].f4f,
-				carriers[i].sbd)
+			// Normal display: CAP, then deck aircraft (with MOD 1000 for SBDs), then hangar
+			displaySbd := int(carriers[i].deckSbd) % 1000
+         fmt.Printf("%3.0f %3.0f %3.0f %3.0f %3.0f %3.0f %3.0f\n",
+         	carriers[i].cap,           // CAP F4F
+         	carriers[i].deckF4f,       // DECK F4F  
+         	float64(displaySbd),       // DECK SBD
+         	carriers[i].deckTbd,       // DECK TBD
+         	carriers[i].f4f,           // HANGAR F4F
+         	carriers[i].sbd,           // HANGAR SBD
+         	carriers[i].tbd)           // HANGAR TBD - THIS WAS MISSING!
 		}
 	}
 	fmt.Println()

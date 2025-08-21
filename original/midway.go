@@ -174,13 +174,19 @@ func initializeGame() {
 	carriers[8].cap = carriers[8].f4f
 	carriers[8].f4f = 0
 	
-	// Initialize deck positions (aircraft start in hangar, not on deck)
-	for i := 4; i <= 7; i++ {
-		carriers[i].deckF4f = 0
-		carriers[i].deckSbd = 0  
-		carriers[i].deckTbd = 0
-		carriers[i].cap = 0
-	}
+   // In initializeGame(), replace the deck initialization section:
+   // Initialize deck positions - BASIC line 100 shows deck = hangar initially
+   for i := 4; i <= 7; i++ {
+   	// Copy hangar to deck initially (BASIC line 100)
+   	carriers[i].deckF4f = carriers[i].f4f
+   	carriers[i].deckSbd = carriers[i].sbd  
+   	carriers[i].deckTbd = carriers[i].tbd
+   	// Then clear hangar (BASIC line 100 shows J-3 gets cleared)
+   	carriers[i].f4f = 0
+   	carriers[i].sbd = 0
+   	carriers[i].tbd = 0
+   	carriers[i].cap = 0
+   }
 	
 	// Set initial courses for TF-16 and TF-17
 	for i := 3; i <= 4; i++ {
@@ -209,11 +215,32 @@ func getAngle(from, to int) float64 {
 }
 
 func gameLoop() {
+	// Initial display setup
+	clearScreen()
+	fmt.Println("** MIDWAY CAMPAIGN **")
+	fmt.Println()
+	
+	// Display initial map framework
+	for i := 1; i <= 12; i++ {
+		fmt.Print(". . . . . . . . . . . .\n")
+	}
+	
+	fmt.Printf("                    TF-16\n")
+	fmt.Printf("                  TF-17\n")
+   fmt.Printf("            CAP - ON DECK - -- BELOW --\n")
+   fmt.Printf("            F4F SBD TBD F4F SBD TBD\n")  // This should be 6 aircraft types displayed
+	
+	displayCarriers()
+	
+	// Main game loop
 	for !gameOver {
 		clearScreen()
 		displayMap()
 		displayStatus()
 		displayContacts()
+		// Display the carrier headers
+		fmt.Printf("            CAP - ON DECK - -- BELOW --\n")
+		fmt.Printf("            F4F SBD TBD F4F SBD TBD\n")
 		displayCarriers()
 		
 		if gameOver {
@@ -296,89 +323,6 @@ func changeCourse() {
 	
 	fleets[fleetNum].course = course * pi
 	displayContacts()
-}
-
-func launchStrike() {
-	carrier := selectCarrier()
-	if carrier == -1 {
-		return
-	}
-	
-	if carriers[carrier].deckSbd+carriers[carrier].deckTbd == 0 {
-		fmt.Printf("%s HAS NO STRIKE READY.\n", getCarrierName(carrier))
-		time.Sleep(1 * time.Second)
-		return
-	}
-	
-	// Find available targets
-	targets := []int{}
-	for i := 0; i < 3; i++ {
-		if fleets[i].damage > 0 {
-			targets = append(targets, i)
-		}
-	}
-	
-	if len(targets) == 0 {
-		fmt.Println("NO TARGETS.")
-		time.Sleep(1 * time.Second)
-		return
-	}
-	
-	var target int
-	if len(targets) > 1 {
-		fmt.Print("TARGET CONTACT: ")
-		if !scanner.Scan() {
-			return
-		}
-		targetNum, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
-		if err != nil || targetNum < 1 || targetNum > len(targets) {
-			return
-		}
-		target = targets[targetNum-1]
-	} else {
-		target = targets[0]
-	}
-	
-	// Check range
-	distance := getDistance(carrier, target)
-	if distance > 200 {
-		fmt.Printf("%.0f NAUTICAL MILES, OUT OF RANGE.\n", distance)
-		time.Sleep(1 * time.Second)
-		return
-	}
-	
-	// Find available strike slot
-	strikeSlot := -1
-	for i := 0; i < 10; i++ {
-		if strikes[i].launched == -1 {
-			strikeSlot = i
-			break
-		}
-	}
-	
-	if strikeSlot == -1 {
-		fmt.Println("TOO MANY STRIKES ALOFT.")
-		time.Sleep(1 * time.Second)
-		return
-	}
-	
-	// Launch strike
-	flightTime := distance * 0.3
-	strikes[strikeSlot].f4f = carriers[carrier].deckF4f
-	strikes[strikeSlot].sbd = carriers[carrier].deckSbd
-	strikes[strikeSlot].tbd = carriers[carrier].deckTbd
-	strikes[strikeSlot].target = float64(target)
-	strikes[strikeSlot].arrivalTime = gameTime + flightTime
-	strikes[strikeSlot].returnTime = gameTime + flightTime + flightTime
-	strikes[strikeSlot].launched = carrier
-	
-	// Clear deck
-	carriers[carrier].deckF4f = 0
-	carriers[carrier].deckSbd = 0
-	carriers[carrier].deckTbd = 0
-	
-	fmt.Printf("%s STRIKE TAKING OFF.\n", getCarrierName(carrier))
-	displayCarriers()
 }
 
 func setCap() {
